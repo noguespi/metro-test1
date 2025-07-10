@@ -1,33 +1,31 @@
 package main
 
-import dev.zacsweers.metro.*
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Multibinds
+import dev.zacsweers.metro.createGraph
+import module1.FooProvider
+import module1.Handler
 
-interface Handler<GENERIC> {
-    fun handle(param: GENERIC): Unit
-}
 
-interface MainProvider {
-    @Multibinds(allowEmpty = true)
-    val handlers: Set<Handler<*>>
-}
-
-@ContributesIntoSet(AppScope::class, binding = binding<Handler<*>>())
-@Inject
-internal class Foo() : Handler<String> {
-    override fun handle(param: String) = TODO()
-}
-
-@ContributesIntoSet(AppScope::class, binding = binding<Handler<*>>())
-@Inject
-class Bar() : Handler<Int> {
-    override fun handle(param: Int) = TODO()
+@DependencyGraph
+interface ViaProvider : FooProvider {
+    @Multibinds
+    val handlers: Set<Handler>
 }
 
 @DependencyGraph(AppScope::class)
-internal interface MainGraph : MainProvider {
+interface ViaContributes {
+    @Multibinds
+    val handlers: Set<Handler>
 }
 
 fun main() {
-    val graph = createGraph<MainGraph>()
-    println("main: ${graph.handlers}")
+    createGraph<ViaProvider>().let {
+        println("ViaProvider: ${it.handlers}")
+    }
+
+    createGraph<ViaContributes>().let {
+        println("ViaContributeIntoSet: ${it.handlers}")
+    }
 }
